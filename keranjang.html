@@ -49,7 +49,7 @@
     const checkoutBtn = document.getElementById("checkoutBtn");
 
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    cart = cart.filter(item => item.id && item.name && item.price);
+    cart = cart.filter(item => (item.id || item.product_id) && item.name && item.price);
 
     if (!cart.length) {
       cartContainer.innerHTML = "<p class='text-center text-light/70'>Keranjang kosong.</p>";
