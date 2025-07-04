@@ -38,83 +38,128 @@
     &copy; 2025 DAIKIN AC Specialist. Semua Hak Dilindungi.
   </footer>
   
-  <script>
-    const API_URL = 'https://rifkira.psl17.my.id/api';
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
+<script>
+  const API_URL = 'https://rifkira.psl17.my.id/api';
+  const urlParams = new URLSearchParams(window.location.search);
+  const productId = urlParams.get('id');
 
-    function loadProdukDetail() {
-      fetch(`${API_URL}/products/${productId}`)
-        .then(res => res.json())
-        .then(item => {
-          const container = document.getElementById('detailContainer');
-          const imageFullUrl = item.image_url ? API_URL.replace('/api', '') + item.image_url : '';
+  function loadProdukDetail() {
+    fetch(`${API_URL}/products/${productId}`)
+      .then(res => res.json())
+      .then(item => {
+        const container = document.getElementById('detailContainer');
+        const imageFullUrl = item.image_url ? API_URL.replace('/api', '') + item.image_url : 'https://via.placeholder.com/300';
+        const variants = item.variants || [];
+        const firstVariant = variants[0] || {};
 
-          container.innerHTML = `
-            <div class="tilt-card bg-tertiary p-6 rounded-xl shadow-xl hover:shadow-2xl transition-transform transform hover:scale-[1.02] hover:rotate-[1deg]">
-              <img src="${imageFullUrl}" alt="${item.name}" class="w-full h-64 object-contain bg-white p-4 rounded transition-transform duration-500 hover:scale-105"/>
+        container.innerHTML = `
+          <div class="tilt-card bg-tertiary p-6 rounded-xl shadow-xl hover:shadow-2xl transition-transform transform hover:scale-[1.02] hover:rotate-[1deg]">
+            <img src="${imageFullUrl}" alt="${item.name}" class="w-full h-64 object-contain bg-white p-4 rounded transition-transform duration-500 hover:scale-105"/>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-light mb-2">${item.name}</h2>
+            <p class="text-light/70 mb-2">${item.description || 'Tidak ada deskripsi'}</p>
+            <p><span class="font-semibold">Kategori:</span> <span class="text-accent">${item.category || '-'}</span></p>
+
+            <div class="my-3">
+              <label class="block font-semibold mb-1">Ukuran:</label>
+              <select id="sizeSelect" class="rounded p-2 w-full text-black">
+                ${[...new Set(variants.map(v => v.size))].map(size => `<option value="${size}">${size}</option>`).join('')}
+              </select>
             </div>
-            <div>
-              <h2 class="text-3xl font-bold text-light mb-2">${item.name}</h2>
-              <p class="text-light/70 mb-2">${item.description || 'Tidak ada deskripsi'}</p>
 
-              <p><span class="font-semibold">Kategori:</span> <span class="text-accent">${item.category || '-'}</span></p>
-              <p><span class="font-semibold">Ukuran:</span> <span class="text-accent">${item.size || '-'}</span></p>
-              <p><span class="font-semibold">Warna:</span>
-                <span class="inline-block w-5 h-5 rounded-full border ml-2" style="background:${item.color || '#fff'};"></span>
-                <span class="ml-2">${item.color || '-'}</span>
-              </p>
-
-              <p class="text-accent text-2xl font-bold mt-4 mb-6">Rp ${parseInt(item.price).toLocaleString()}</p>
-
-              <label class="block mb-2 font-semibold" for="qty">Jumlah:</label>
-              <input type="number" id="qty" min="1" value="1" class="w-20 p-2 rounded bg-white text-black text-center">
-
-              <button id="btnKeranjang" class="ml-4 bg-accent text-white px-4 py-2 rounded hover:bg-light hover:text-accent transition">
-                + Tambah ke Keranjang
-              </button>
+            <div class="my-3">
+              <label class="block font-semibold mb-1">Warna:</label>
+              <select id="colorSelect" class="rounded p-2 w-full text-black">
+                ${[...new Set(variants.map(v => v.color))].map(color => `<option value="${color}">${color}</option>`).join('')}
+              </select>
             </div>
-          `;
 
-          VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
-            max: 10,
-            speed: 400,
-            glare: true,
-            "max-glare": 0.2
-          });
+            <p class="text-accent text-2xl font-bold mt-2 mb-4" id="priceText">
+              Rp ${parseInt(firstVariant.price || 0).toLocaleString()}
+            </p>
 
-          // Tambahkan event handler tombol keranjang
-          document.getElementById("btnKeranjang").addEventListener("click", function () {
-            tambahKeKeranjang(item);
-          });
+            <label class="block mb-2 font-semibold" for="qty">Jumlah:</label>
+            <input type="number" id="qty" min="1" value="1" class="w-20 p-2 rounded bg-white text-black text-center">
+
+            <button id="btnKeranjang" class="ml-4 bg-accent text-white px-4 py-2 rounded hover:bg-light hover:text-accent transition">
+              + Tambah ke Keranjang
+            </button>
+          </div>
+        `;
+
+        VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
+          max: 10,
+          speed: 400,
+          glare: true,
+          "max-glare": 0.2
         });
-    }
 
-    function tambahKeKeranjang(item) {
-      const qty = parseInt(document.getElementById('qty').value || 1);
-      const produk = {
-        id: item.id,
-        name: item.name || '-',
-        price: item.price || 0,
-        image: item.image_url ? API_URL.replace('/api', '') + item.image_url : '',
-        color: item.color || '-',
-        size: item.size || '-',
-        category: item.category || '-',
-        qty: qty
-      };
+        // Update harga saat ukuran/warna berubah
+        const sizeSelect = document.getElementById('sizeSelect');
+        const colorSelect = document.getElementById('colorSelect');
+        const priceText = document.getElementById('priceText');
 
-      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      const exist = cart.find(i => i.id === produk.id);
-      if (exist) {
-        exist.qty += qty;
-      } else {
-        cart.push(produk);
-      }
-      localStorage.setItem('cart', JSON.stringify(cart));
-      alert("✅ Produk ditambahkan ke keranjang!");
-    }
+        function updatePrice() {
+          const selectedSize = sizeSelect.value;
+          const selectedColor = colorSelect.value;
+          const selectedVariant = variants.find(v => v.size === selectedSize && v.color === selectedColor);
+          if (selectedVariant) {
+            priceText.innerText = `Rp ${parseInt(selectedVariant.price).toLocaleString('id-ID')}`;
+          } else {
+            priceText.innerHTML = `<span class="text-red-500">Varian tidak tersedia</span>`;
+          }
+        }
 
-    document.addEventListener("DOMContentLoaded", loadProdukDetail);
-  </script>
+        sizeSelect.addEventListener('change', updatePrice);
+        colorSelect.addEventListener('change', updatePrice);
+
+        // Tambahkan ke keranjang
+        document.getElementById("btnKeranjang").addEventListener("click", () => {
+          const selectedSize = sizeSelect.value;
+          const selectedColor = colorSelect.value;
+          const selectedVariant = variants.find(v => v.size === selectedSize && v.color === selectedColor);
+
+          if (!selectedVariant) {
+            alert("Varian tidak tersedia!");
+            return;
+          }
+
+          const qty = parseInt(document.getElementById('qty').value || 1);
+          const produk = {
+            product_id: item.id,
+            variant_id: selectedVariant.id,
+            name: item.name || '-',
+            price: selectedVariant.price || 0,
+            image: imageFullUrl,
+            color: selectedVariant.color,
+            size: selectedVariant.size,
+            qty: qty
+          };
+
+          let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+          const exist = cart.find(i => i.variant_id === produk.variant_id);
+          if (exist) {
+            exist.qty += qty;
+          } else {
+            cart.push(produk);
+          }
+          localStorage.setItem('cart', JSON.stringify(cart));
+          alert("✅ Produk ditambahkan ke keranjang!");
+        });
+
+        // Inisialisasi harga
+        updatePrice();
+      })
+      .catch(err => {
+        console.error("Gagal memuat detail produk:", err);
+        const container = document.getElementById('detailContainer');
+        container.innerHTML = `<p class="text-red-500">Gagal memuat detail produk.</p>`;
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", loadProdukDetail);
+</script>
+
 </body>
 </html>
