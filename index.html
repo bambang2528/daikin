@@ -54,55 +54,81 @@
   </footer>
 
   <!-- Script: Load Produk dari API -->
-  <script>
-    const API_URL = 'https://rifkira.psl17.my.id/api';
+<script>
+  const API_URL = 'https://rifkira.psl17.my.id/api';
 
-    function loadProduk() {
-      fetch(`${API_URL}/products`)
-        .then(res => res.json())
-        .then(data => {
-          const list = document.getElementById('produkList');
-          list.innerHTML = "";
+  function loadProduk() {
+    fetch(`${API_URL}/products`)
+      .then(res => res.json())
+      .then(data => {
+        const list = document.getElementById('produkList');
+        if (!list) return;
 
-          data.forEach(item => {
-            const card = document.createElement('div');
-            card.className = `tilt-card cursor-pointer relative group rounded-xl overflow-hidden shadow-xl bg-tertiary transition-transform duration-500 transform hover:-translate-y-2 hover:rotate-[1deg] hover:scale-[1.02]`;
-            card.onclick = () => window.location.href = `detail.html?id=${item.id}`;
+        list.innerHTML = "";
 
-            card.innerHTML = `
-              <div class="overflow-hidden relative">
-                <img src="${item.image_url ? API_URL.replace('/api', '') + item.image_url : 'https://via.placeholder.com/300'}" alt="${item.name}" class="w-full h-52 object-contain bg-white p-4 transition-transform duration-500 group-hover:scale-110" />
-                <div class="absolute inset-0 bg-black/30 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                <div class="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-10 shadow">Promo</div>
-              </div>
-              <div class="p-5 relative z-10">
-                <h3 class="text-xl font-extrabold text-light mb-1 group-hover:text-accent transition duration-300">${item.name}</h3>
-                <p class="text-sm text-light/70 mb-3">${item.description ? item.description.slice(0, 60) + '...' : ''}</p>
-                <p class="text-accent text-lg font-bold">Rp ${parseInt(item.price).toLocaleString()}</p>
-              </div>
-              <div class="h-1 bg-accent w-0 group-hover:w-full transition-all duration-500"></div>
-            `;
+        if (!Array.isArray(data) || data.length === 0) {
+          list.innerHTML = `<p class="text-center text-light/70">Belum ada produk tersedia.</p>`;
+          return;
+        }
 
-            list.appendChild(card);
-          });
+        data.forEach(item => {
+          // Ambil varian pertama jika ada
+          const variant = item.variants && item.variants.length > 0 ? item.variants[0] : null;
 
-          // Aktifkan efek VanillaTilt
-          VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
-            max: 10,
-            speed: 400,
-            glare: true,
-            "max-glare": 0.2
-          });
-        })
-        .catch(err => {
-          console.error("Gagal memuat produk:", err);
-          document.getElementById('produkList').innerHTML = `<p class="text-white">Gagal memuat produk.</p>`;
+          const card = document.createElement('div');
+          card.className = `
+            tilt-card cursor-pointer relative group rounded-xl overflow-hidden 
+            shadow-xl bg-tertiary transition-transform duration-500 
+            transform hover:-translate-y-2 hover:rotate-[1deg] hover:scale-[1.02]
+          `.trim();
+
+          card.onclick = () => window.location.href = `detail.html?id=${item.id}`;
+
+          card.innerHTML = `
+            <div class="overflow-hidden relative">
+              <img src="${item.image_url ? API_URL.replace('/api', '') + item.image_url : 'https://via.placeholder.com/300'}" 
+                   alt="${item.name}" 
+                   class="w-full h-52 object-contain bg-white p-4 transition-transform duration-500 group-hover:scale-110" />
+              <div class="absolute inset-0 bg-black/30 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition duration-500"></div>
+              <div class="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-10 shadow">Promo</div>
+            </div>
+
+            <div class="p-5 relative z-10">
+              <h3 class="text-xl font-extrabold text-light mb-1 group-hover:text-accent transition duration-300">
+                ${item.name}
+              </h3>
+              <p class="text-sm text-light/70 mb-3">
+                ${item.description ? item.description.slice(0, 60) + '...' : 'Tidak ada deskripsi.'}
+              </p>
+              <p class="text-accent text-lg font-bold">
+                ${variant ? 'Rp ' + parseInt(variant.price).toLocaleString('id-ID') : 'Harga tidak tersedia'}
+              </p>
+            </div>
+
+            <div class="h-1 bg-accent w-0 group-hover:w-full transition-all duration-500"></div>
+          `;
+
+          list.appendChild(card);
         });
-    }
 
-    // Panggil saat halaman dimuat
-    document.addEventListener("DOMContentLoaded", loadProduk);
-  </script>
+        // Aktifkan efek VanillaTilt
+        VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
+          max: 10,
+          speed: 400,
+          glare: true,
+          "max-glare": 0.2
+        });
+      })
+      .catch(err => {
+        console.error("Gagal memuat produk:", err);
+        document.getElementById('produkList').innerHTML = `<p class="text-white">Gagal memuat produk.</p>`;
+      });
+  }
+
+  // Panggil saat halaman dimuat
+  document.addEventListener("DOMContentLoaded", loadProduk);
+</script>
+
 
 </body>
 </html>
