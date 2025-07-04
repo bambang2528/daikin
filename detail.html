@@ -96,61 +96,64 @@
         });
 
         // Update harga saat ukuran/warna berubah
-        const sizeSelect = document.getElementById('sizeSelect');
-        const colorSelect = document.getElementById('colorSelect');
-        const priceText = document.getElementById('priceText');
+// Update harga saat ukuran/warna berubah
+const sizeSelect = document.getElementById('sizeSelect');
+const colorSelect = document.getElementById('colorSelect');
+const priceText = document.getElementById('priceText');
 
-        function updatePrice() {
-          const selectedSize = sizeSelect.value;
-          const selectedColor = colorSelect.value;
-          const selectedVariant = variants.find(v => v.size === selectedSize && v.color === selectedColor);
-          if (selectedVariant) {
-            priceText.innerText = `Rp ${parseInt(selectedVariant.price).toLocaleString('id-ID')}`;
-          } else {
-            priceText.innerHTML = `<span class="text-red-500">Varian tidak tersedia</span>`;
-          }
-        }
+function updatePrice() {
+  const selectedSize = sizeSelect.value;
+  const selectedColor = colorSelect.value;
+  const selectedVariant = variants.find(v => v.size === selectedSize && v.color === selectedColor);
+  if (selectedVariant) {
+    priceText.innerText = `Rp ${parseInt(selectedVariant.price).toLocaleString('id-ID')}`;
+  } else {
+    priceText.innerHTML = `<span class="text-red-500">Varian tidak tersedia</span>`;
+  }
+}
 
-        sizeSelect.addEventListener('change', updatePrice);
-        colorSelect.addEventListener('change', updatePrice);
+sizeSelect.addEventListener('change', updatePrice);
+colorSelect.addEventListener('change', updatePrice);
 
-        // Tambahkan ke keranjang
-        document.getElementById("btnKeranjang").addEventListener("click", () => {
-          const selectedSize = sizeSelect.value;
-          const selectedColor = colorSelect.value;
-          const selectedVariant = variants.find(v => v.size === selectedSize && v.color === selectedColor);
+// Tambahkan ke keranjang
+document.getElementById("btnKeranjang").addEventListener("click", () => {
+  const selectedSize = sizeSelect.value;
+  const selectedColor = colorSelect.value;
+  const selectedVariant = variants.find(v => v.size === selectedSize && v.color === selectedColor);
 
-          if (!selectedVariant) {
-            alert("Varian tidak tersedia!");
-            return;
-          }
+  if (!selectedVariant) {
+    alert("❌ Varian tidak tersedia!");
+    return;
+  }
 
-          const qty = parseInt(document.getElementById('qty').value || 1);
-          const produk = {
-            product_id: item.id,
-            variant_id: selectedVariant.id,
-            name: item.name || '-',
-            price: selectedVariant.price || 0,
-            image: imageFullUrl,
-            color: selectedVariant.color,
-            size: selectedVariant.size,
-            qty: qty
-          };
+  const qty = parseInt(document.getElementById('qty').value || 1);
+  const produk = {
+    product_id: product.id,
+    variant_id: selectedVariant.id,
+    name: product.name || '-',
+    price: parseInt(selectedVariant.price) || 0,
+    image: product.image_url ? API_URL.replace('/api', '') + product.image_url : '',
+    color: selectedVariant.color,
+    size: selectedVariant.size,
+    category: product.category || '-',
+    qty: qty
+  };
 
-          let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-          const exist = cart.find(i => i.variant_id === produk.variant_id);
-          if (exist) {
-            exist.qty += qty;
-          } else {
-            cart.push(produk);
-          }
-          localStorage.setItem('cart', JSON.stringify(cart));
-          alert("✅ Produk ditambahkan ke keranjang!");
-        });
+  let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const exist = cart.find(i => i.variant_id === produk.variant_id);
+  if (exist) {
+    exist.qty += qty;
+  } else {
+    cart.push(produk);
+  }
 
-        // Inisialisasi harga
-        updatePrice();
-      })
+  localStorage.setItem('cart', JSON.stringify(cart));
+  alert("✅ Produk ditambahkan ke keranjang!");
+});
+
+// Inisialisasi harga
+updatePrice();
+
       .catch(err => {
         console.error("Gagal memuat detail produk:", err);
         const container = document.getElementById('detailContainer');
