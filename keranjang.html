@@ -40,89 +40,96 @@
     </div>
   </main>
 
-  <script>
-    const API_URL = 'https://rifkira.psl17.my.id';
+<script>
+  const API_URL = 'https://rifkira.psl17.my.id';
 
-    function loadCart() {
-      const cartContainer = document.getElementById("cartContainer");
-      const totalHarga = document.getElementById("totalHarga");
-      const checkoutBtn = document.getElementById("checkoutBtn");
+  function loadCart() {
+    const cartContainer = document.getElementById("cartContainer");
+    const totalHarga = document.getElementById("totalHarga");
+    const checkoutBtn = document.getElementById("checkoutBtn");
 
-      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      cart = cart.filter(item => item.id && item.name && item.price);
-      if (!cart.length) {
-        cartContainer.innerHTML = "<p class='text-center text-light/70'>Keranjang kosong.</p>";
-        checkoutBtn.classList.add("opacity-50", "pointer-events-none");
-        totalHarga.textContent = "Rp 0";
-        return;
-      }
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    cart = cart.filter(item => item.id && item.name && item.price);
 
-      let total = 0;
-      let pesanWA = `Halo, saya ingin memesan produk berikut:%0A`;
+    if (!cart.length) {
+      cartContainer.innerHTML = "<p class='text-center text-light/70'>Keranjang kosong.</p>";
+      checkoutBtn.classList.add("opacity-50", "pointer-events-none");
+      totalHarga.textContent = "Rp 0";
+      return;
+    }
 
-      cartContainer.innerHTML = cart.map((item, index) => {
-        const image = item.image || (item.image_url ? API_URL + item.image_url : 'https://via.placeholder.com/100');
-        const subtotal = item.qty * parseInt(item.price);
-        total += subtotal;
+    let total = 0;
+    let pesanWA = `Halo, saya ingin memesan produk berikut:%0A`;
 
-        pesanWA += `- ${item.name} (${item.qty}x)%0A  Size: ${item.size || '-'}, Color: ${item.color || '-'}, Kategori: ${item.category || '-'}%0A  Subtotal: Rp${subtotal.toLocaleString()}%0A`;
+    const cards = cart.map((item, index) => {
+      const image = item.image || (item.image_url ? API_URL + item.image_url : 'https://via.placeholder.com/100');
+      const price = parseInt(item.price || 0);
+      const qty = parseInt(item.qty || 1);
+      const subtotal = price * qty;
 
-        return `
-          <div class="relative tilt-card bg-tertiary p-4 rounded-lg shadow-md flex gap-4 hover:scale-[1.01] transition">
-            <button onclick="hapusItem(${index})" class="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">
-              ✕
-            </button>
-            <img src="${image}" class="w-24 h-24 object-contain bg-white p-2 rounded" />
-            <div class="flex-1">
-              <h3 class="text-lg font-bold">${item.name}</h3>
-              <p>Size: <span class="text-accent">${item.size || '-'}</span></p>
-              <p>Color: <span class="text-accent">${item.color || '-'}</span></p>
-              <p>Kategori: <span class="text-accent">${item.category || '-'}</span></p>
-              <p>Harga: Rp${parseInt(item.price).toLocaleString()}</p>
+      total += subtotal;
 
-              <div class="flex items-center mt-2 gap-2">
-                <button onclick="updateQty(${index}, -1)" class="bg-light text-dark px-2 rounded">−</button>
-                <span>${item.qty}</span>
-                <button onclick="updateQty(${index}, 1)" class="bg-light text-dark px-2 rounded">+</button>
-              </div>
+      pesanWA += `- ${item.name} (${qty}x)%0A  Size: ${item.size || '-'}, Color: ${item.color || '-'}, Kategori: ${item.category || '-'}%0A  Subtotal: Rp${subtotal.toLocaleString()}%0A`;
 
-              <p class="font-bold text-accent mt-1">Subtotal: Rp${subtotal.toLocaleString()}</p>
+      return `
+        <div class="relative tilt-card bg-tertiary p-4 rounded-lg shadow-md flex gap-4 hover:scale-[1.01] transition">
+          <button onclick="hapusItem(${index})" class="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">
+            ✕
+          </button>
+          <img src="${image}" class="w-24 h-24 object-contain bg-white p-2 rounded" />
+          <div class="flex-1">
+            <h3 class="text-lg font-bold">${item.name}</h3>
+            <p>Size: <span class="text-accent">${item.size || '-'}</span></p>
+            <p>Color: <span class="text-accent">${item.color || '-'}</span></p>
+            <p>Kategori: <span class="text-accent">${item.category || '-'}</span></p>
+            <p>Harga: Rp${price.toLocaleString()}</p>
+
+            <div class="flex items-center mt-2 gap-2">
+              <button onclick="updateQty(${index}, -1)" class="bg-light text-dark px-2 rounded">−</button>
+              <span>${qty}</span>
+              <button onclick="updateQty(${index}, 1)" class="bg-light text-dark px-2 rounded">+</button>
             </div>
+
+            <p class="font-bold text-accent mt-1">Subtotal: Rp${subtotal.toLocaleString()}</p>
           </div>
-        `;
-      }).join("");
+        </div>
+      `;
+    });
 
-      totalHarga.textContent = "Rp " + total.toLocaleString();
-      pesanWA += `%0ATotal: Rp${total.toLocaleString()}%0A%0ATerima kasih!`;
-      checkoutBtn.href = `https://wa.me/6288809317425?text=${encodeURIComponent(pesanWA)}`;
+    cartContainer.innerHTML = cards.join("");
+    totalHarga.textContent = "Rp " + total.toLocaleString();
+    pesanWA += `%0ATotal: Rp${total.toLocaleString()}%0A%0ATerima kasih!`;
+    checkoutBtn.href = `https://wa.me/6288809317425?text=${encodeURIComponent(pesanWA)}`;
 
-      localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem('cart', JSON.stringify(cart));
 
-      VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
-        max: 10,
-        speed: 400,
-        glare: true,
-        "max-glare": 0.2
-      });
-    }
+    // Inisialisasi efek tilt
+    VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
+      max: 10,
+      speed: 400,
+      glare: true,
+      "max-glare": 0.2
+    });
+  }
 
-    function updateQty(index, change) {
-      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      if (!cart[index]) return;
-      cart[index].qty += change;
-      if (cart[index].qty < 1) cart[index].qty = 1;
-      localStorage.setItem('cart', JSON.stringify(cart));
-      loadCart();
-    }
+  function updateQty(index, change) {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    if (!cart[index]) return;
+    cart[index].qty += change;
+    if (cart[index].qty < 1) cart[index].qty = 1;
+    localStorage.setItem('cart', JSON.stringify(cart));
+    loadCart();
+  }
 
-    function hapusItem(index) {
-      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      cart.splice(index, 1);
-      localStorage.setItem('cart', JSON.stringify(cart));
-      loadCart();
-    }
+  function hapusItem(index) {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    cart.splice(index, 1);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    loadCart();
+  }
 
-    document.addEventListener("DOMContentLoaded", loadCart);
-  </script>
+  document.addEventListener("DOMContentLoaded", loadCart);
+</script>
+
 </body>
 </html>
