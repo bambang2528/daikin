@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Detail Produk - DAIKIN</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.2/vanilla-tilt.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3c6498',
+            secondary: '#486e9f',
+            tertiary: '#4b6c8f',
+            accent: '#ff5757',
+            dark: '#272e37',
+            light: '#fffffe',
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-dark text-light font-sans">
+  <header class="bg-primary text-light p-4 shadow-md">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Detail Produk</h1>
+      <a href="keranjang.html" class="bg-accent px-4 py-2 rounded hover:bg-light hover:text-accent transition">Keranjang</a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-10 items-center" id="detailContainer"></main>
+
+    <!-- Footer -->
+  <footer class="bg-primary text-light text-center py-4 mt-12 text-sm">
+    &copy; 2025 DAIKIN AC Specialist. Semua Hak Dilindungi.
+  </footer>
+  
+  <script>
+    const API_URL = 'https://rifkira.psl17.my.id/api';
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    function loadProdukDetail() {
+      fetch(`${API_URL}/products/${productId}`)
+        .then(res => res.json())
+        .then(item => {
+          const container = document.getElementById('detailContainer');
+          const imageFullUrl = item.image_url ? API_URL.replace('/api', '') + item.image_url : '';
+
+          container.innerHTML = `
+            <div class="tilt-card bg-tertiary p-6 rounded-xl shadow-xl hover:shadow-2xl transition-transform transform hover:scale-[1.02] hover:rotate-[1deg]">
+              <img src="${imageFullUrl}" alt="${item.name}" class="w-full h-64 object-contain bg-white p-4 rounded transition-transform duration-500 hover:scale-105"/>
+            </div>
+            <div>
+              <h2 class="text-3xl font-bold text-light mb-2">${item.name}</h2>
+              <p class="text-light/70 mb-2">${item.description || 'Tidak ada deskripsi'}</p>
+
+              <p><span class="font-semibold">Kategori:</span> <span class="text-accent">${item.category || '-'}</span></p>
+              <p><span class="font-semibold">Ukuran:</span> <span class="text-accent">${item.size || '-'}</span></p>
+              <p><span class="font-semibold">Warna:</span>
+                <span class="inline-block w-5 h-5 rounded-full border ml-2" style="background:${item.color || '#fff'};"></span>
+                <span class="ml-2">${item.color || '-'}</span>
+              </p>
+
+              <p class="text-accent text-2xl font-bold mt-4 mb-6">Rp ${parseInt(item.price).toLocaleString()}</p>
+
+              <label class="block mb-2 font-semibold" for="qty">Jumlah:</label>
+              <input type="number" id="qty" min="1" value="1" class="w-20 p-2 rounded bg-white text-black text-center">
+
+              <button id="btnKeranjang" class="ml-4 bg-accent text-white px-4 py-2 rounded hover:bg-light hover:text-accent transition">
+                + Tambah ke Keranjang
+              </button>
+            </div>
+          `;
+
+          VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
+            max: 10,
+            speed: 400,
+            glare: true,
+            "max-glare": 0.2
+          });
+
+          // Tambahkan event handler tombol keranjang
+          document.getElementById("btnKeranjang").addEventListener("click", function () {
+            tambahKeKeranjang(item);
+          });
+        });
+    }
+
+    function tambahKeKeranjang(item) {
+      const qty = parseInt(document.getElementById('qty').value || 1);
+      const produk = {
+        id: item.id,
+        name: item.name || '-',
+        price: item.price || 0,
+        image: item.image_url ? API_URL.replace('/api', '') + item.image_url : '',
+        color: item.color || '-',
+        size: item.size || '-',
+        category: item.category || '-',
+        qty: qty
+      };
+
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const exist = cart.find(i => i.id === produk.id);
+      if (exist) {
+        exist.qty += qty;
+      } else {
+        cart.push(produk);
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      alert("✅ Produk ditambahkan ke keranjang!");
+    }
+
+    document.addEventListener("DOMContentLoaded", loadProdukDetail);
+  </script>
+</body>
+</html>

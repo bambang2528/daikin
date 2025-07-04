@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DAIKIN AC Specialist</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.2/vanilla-tilt.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3c6498',
+            secondary: '#486e9f',
+            tertiary: '#4b6c8f',
+            accent: '#ff5757',
+            dark: '#272e37',
+            light: '#fffffe',
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-dark text-light font-sans">
+
+  <!-- Header -->
+  <header class="bg-primary text-light p-4 shadow-md">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold tracking-wider">DAIKIN AC Specialist</h1>
+      <a href="keranjang.html" class="bg-accent px-4 py-2 rounded hover:bg-light hover:text-accent transition">Keranjang</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="bg-secondary text-light py-10 text-center">
+    <h2 class="text-3xl font-semibold">Profesional Cuci, Instalasi, dan Service AC</h2>
+    <p class="mt-2 text-sm">Hubungi langsung: 
+      <a href="https://wa.me/6288809317425" class="text-accent font-medium hover:underline">0888-0931-7425</a>
+    </p>
+  </section>
+
+  <!-- Produk Section -->
+  <main class="max-w-7xl mx-auto px-4 py-10">
+    <div id="produkList" class="grid gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <!-- Produk dimuat dari API -->
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-primary text-light text-center py-4 mt-12 text-sm">
+    &copy; 2025 DAIKIN AC Specialist. Semua Hak Dilindungi.
+  </footer>
+
+  <!-- Script: Load Produk dari API -->
+  <script>
+    const API_URL = 'https://rifkira.psl17.my.id/api';
+
+    function loadProduk() {
+      fetch(`${API_URL}/products`)
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById('produkList');
+          list.innerHTML = "";
+
+          data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = `tilt-card cursor-pointer relative group rounded-xl overflow-hidden shadow-xl bg-tertiary transition-transform duration-500 transform hover:-translate-y-2 hover:rotate-[1deg] hover:scale-[1.02]`;
+            card.onclick = () => window.location.href = `detail.html?id=${item.id}`;
+
+            card.innerHTML = `
+              <div class="overflow-hidden relative">
+                <img src="${item.image_url ? API_URL.replace('/api', '') + item.image_url : 'https://via.placeholder.com/300'}" alt="${item.name}" class="w-full h-52 object-contain bg-white p-4 transition-transform duration-500 group-hover:scale-110" />
+                <div class="absolute inset-0 bg-black/30 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                <div class="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-10 shadow">Promo</div>
+              </div>
+              <div class="p-5 relative z-10">
+                <h3 class="text-xl font-extrabold text-light mb-1 group-hover:text-accent transition duration-300">${item.name}</h3>
+                <p class="text-sm text-light/70 mb-3">${item.description ? item.description.slice(0, 60) + '...' : ''}</p>
+                <p class="text-accent text-lg font-bold">Rp ${parseInt(item.price).toLocaleString()}</p>
+              </div>
+              <div class="h-1 bg-accent w-0 group-hover:w-full transition-all duration-500"></div>
+            `;
+
+            list.appendChild(card);
+          });
+
+          // Aktifkan efek VanillaTilt
+          VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
+            max: 10,
+            speed: 400,
+            glare: true,
+            "max-glare": 0.2
+          });
+        })
+        .catch(err => {
+          console.error("Gagal memuat produk:", err);
+          document.getElementById('produkList').innerHTML = `<p class="text-white">Gagal memuat produk.</p>`;
+        });
+    }
+
+    // Panggil saat halaman dimuat
+    document.addEventListener("DOMContentLoaded", loadProduk);
+  </script>
+
+</body>
+</html>

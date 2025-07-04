@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Keranjang - DAIKIN</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.2/vanilla-tilt.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3c6498',
+            secondary: '#486e9f',
+            tertiary: '#4b6c8f',
+            accent: '#ff5757',
+            dark: '#272e37',
+            light: '#fffffe',
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-dark text-light font-sans">
+  <header class="bg-primary text-light p-4 shadow-md">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Keranjang Belanja</h1>
+      <a href="index.html" class="bg-accent px-4 py-2 rounded hover:bg-light hover:text-accent transition">Kembali</a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-10 space-y-4">
+    <div id="cartContainer"></div>
+
+    <div class="border-t pt-4 flex justify-between items-center">
+      <h2 class="text-xl font-bold">Total: <span id="totalHarga">Rp 0</span></h2>
+      <a id="checkoutBtn" href="#" target="_blank" class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition">Checkout WhatsApp</a>
+    </div>
+  </main>
+
+  <script>
+    const API_URL = 'https://rifkira.psl17.my.id';
+
+    function loadCart() {
+      const cartContainer = document.getElementById("cartContainer");
+      const totalHarga = document.getElementById("totalHarga");
+      const checkoutBtn = document.getElementById("checkoutBtn");
+
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      cart = cart.filter(item => item.id && item.name && item.price);
+      if (!cart.length) {
+        cartContainer.innerHTML = "<p class='text-center text-light/70'>Keranjang kosong.</p>";
+        checkoutBtn.classList.add("opacity-50", "pointer-events-none");
+        totalHarga.textContent = "Rp 0";
+        return;
+      }
+
+      let total = 0;
+      let pesanWA = `Halo, saya ingin memesan produk berikut:%0A`;
+
+      cartContainer.innerHTML = cart.map((item, index) => {
+        const image = item.image || (item.image_url ? API_URL + item.image_url : 'https://via.placeholder.com/100');
+        const subtotal = item.qty * parseInt(item.price);
+        total += subtotal;
+
+        pesanWA += `- ${item.name} (${item.qty}x)%0A  Size: ${item.size || '-'}, Color: ${item.color || '-'}, Kategori: ${item.category || '-'}%0A  Subtotal: Rp${subtotal.toLocaleString()}%0A`;
+
+        return `
+          <div class="relative tilt-card bg-tertiary p-4 rounded-lg shadow-md flex gap-4 hover:scale-[1.01] transition">
+            <button onclick="hapusItem(${index})" class="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-800 rounded-full w-6 h-6 flex items-center justify-center text-sm">
+              ✕
+            </button>
+            <img src="${image}" class="w-24 h-24 object-contain bg-white p-2 rounded" />
+            <div class="flex-1">
+              <h3 class="text-lg font-bold">${item.name}</h3>
+              <p>Size: <span class="text-accent">${item.size || '-'}</span></p>
+              <p>Color: <span class="text-accent">${item.color || '-'}</span></p>
+              <p>Kategori: <span class="text-accent">${item.category || '-'}</span></p>
+              <p>Harga: Rp${parseInt(item.price).toLocaleString()}</p>
+
+              <div class="flex items-center mt-2 gap-2">
+                <button onclick="updateQty(${index}, -1)" class="bg-light text-dark px-2 rounded">−</button>
+                <span>${item.qty}</span>
+                <button onclick="updateQty(${index}, 1)" class="bg-light text-dark px-2 rounded">+</button>
+              </div>
+
+              <p class="font-bold text-accent mt-1">Subtotal: Rp${subtotal.toLocaleString()}</p>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      totalHarga.textContent = "Rp " + total.toLocaleString();
+      pesanWA += `%0ATotal: Rp${total.toLocaleString()}%0A%0ATerima kasih!`;
+      checkoutBtn.href = `https://wa.me/6288809317425?text=${encodeURIComponent(pesanWA)}`;
+
+      localStorage.setItem('cart', JSON.stringify(cart));
+
+      VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
+        max: 10,
+        speed: 400,
+        glare: true,
+        "max-glare": 0.2
+      });
+    }
+
+    function updateQty(index, change) {
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      if (!cart[index]) return;
+      cart[index].qty += change;
+      if (cart[index].qty < 1) cart[index].qty = 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      loadCart();
+    }
+
+    function hapusItem(index) {
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      cart.splice(index, 1);
+      localStorage.setItem('cart', JSON.stringify(cart));
+      loadCart();
+    }
+
+    document.addEventListener("DOMContentLoaded", loadCart);
+  </script>
+</body>
+</html>
